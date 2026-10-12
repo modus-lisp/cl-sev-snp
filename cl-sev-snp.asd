@@ -18,6 +18,7 @@
                              (:file "rsa")
                              (:file "ec")
                              (:file "snp")
+                             (:file "nitro")
                              (:file "tinfoil")
                              (:file "rekor")))))
 

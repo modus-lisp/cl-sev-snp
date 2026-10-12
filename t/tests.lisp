@@ -2,7 +2,7 @@
 ;; Load the library source first (it defines package CL-SEV-SNP), then the test package.
 (let ((root (merge-pathnames "../" (make-pathname :name nil :type nil :version nil
                                                  :defaults (or *load-truename* *default-pathname-defaults*)))))
-  (dolist (f '("package" "hash" "encoding" "der" "rsa" "ec" "snp" "tinfoil" "rekor"))
+  (dolist (f '("package" "hash" "encoding" "der" "rsa" "ec" "snp" "nitro" "tinfoil" "rekor"))
     (load (merge-pathnames (format nil "src/~a.lisp" f) root))))
 
 (defpackage :cl-sev-snp-tests (:use :cl :cl-sev-snp))
@@ -97,6 +97,38 @@
        (let* ((b (copy-obj (fx-json))) (p (payload-of b)))
          (setf (aref p 30) (logxor 1 (aref p 30)))
          (not (values (cl-sev-snp:verify-rekor-entry (tlog-entry b) p)))))
+
+;; --- AWS Nitro attestation document (COSE_Sign1 / ES384) ---
+(defparameter *nitro-pcr0* "ce17622417e97857c605a26bf56986e468fbfc9d3b43781689ee32002ff44f2a1afd7b51f44db67e955df00a8148b4a9")
+(defparameter *nitro-nonce* "c310da41c885587982e0d1e60ccbe489")
+;; nitro.cbor is a LIVE capture, and an AWS Nitro enclave leaf certificate is only valid for a
+;; few hours (this one: 2026-10-12 01:36:34Z .. 04:36:37Z).  Verifying it against the wall clock
+;; therefore starts failing the moment the capture ages out, which says nothing about the code.
+;; Pin NOW inside the leaf's window so the suite tests the verifier, not the calendar.
+(defparameter *nitro-now* 1791770000 "2026-10-12 01:53:20Z, inside the fixture leaf's validity.")
+(defun nitro-ok (raw &key (pcr0 *nitro-pcr0*) (nonce *nitro-nonce*) (now *nitro-now*))
+  "Primary value is the OK flag (so (not (nitro-ok ...)) reads naturally)."
+  (multiple-value-bind (doc ok) (verify-nitro-doc raw :expected-pcr0 pcr0 :nonce-hex nonce :now now)
+    (values ok doc)))
+
+(check "genuine Nitro document verifies"
+       (multiple-value-bind (ok doc) (nitro-ok (fx "nitro.cbor")) (and ok doc)))
+(check "Nitro PCR0 tamper fails"
+       (not (nitro-ok (fx "nitro.cbor") :pcr0 (concatenate 'string "00" (subseq *nitro-pcr0* 2)))))
+(check "Nitro nonce mismatch fails"
+       (not (nitro-ok (fx "nitro.cbor") :nonce "00000000000000000000000000000000")))
+(check "Nitro signature tamper fails"
+       (not (nitro-ok (flip (fx "nitro.cbor") (- (length (fx "nitro.cbor")) 1)))))
+(check "Nitro document carries the attested public_key"
+       (multiple-value-bind (ok doc) (nitro-ok (fx "nitro.cbor"))
+         (and ok (= (length (nitro-doc-public-key doc)) 32))))
+(check "Nitro chain terminates at the pinned AWS root"
+       (multiple-value-bind (ok doc) (nitro-ok (fx "nitro.cbor"))
+         (and ok (equalp (sha256 (cert-der (first (nitro-doc-cabundle doc))))
+                         (sha256 (cert-der (nitro-root-certificate)))))))
+;; the validity window is still enforced — just not against the wall clock
+(check "Nitro leaf outside its validity window fails"
+       (not (nitro-ok (fx "nitro.cbor") :now (+ *nitro-now* (* 400 24 3600)))))
 
 (let* ((fails (remove-if #'cdr *results*)))
   (format t "~%~d/~d passed~%" (- (length *results*) (length fails)) (length *results*))

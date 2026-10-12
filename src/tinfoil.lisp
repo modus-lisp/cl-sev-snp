@@ -46,6 +46,11 @@
   (let* ((n (floor (length hex) 2)) (v (make-array n :element-type '(unsigned-byte 8))))
     (dotimes (i n v) (setf (aref v i) (parse-integer hex :start (* 2 i) :end (+ 2 (* 2 i)) :radix 16)))))
 
+(defun tinfoil-bundle-report-data (bundle)
+  "The 64-byte report_data of BUNDLE's SNP report (json-simple hash table)."
+  (snp-report-report-data
+   (parse-snp-report (%gunzip (base64-decode (%json-get bundle "enclaveAttestationReport" "body"))))))
+
 (defun verify-tinfoil-bundle (bundle ark-der ask-der &key (now (- (get-universal-time) 2208988800)))
   "Verify BUNDLE, a parsed Tinfoil attestation document (json-simple hash tables).
 ARK-DER and ASK-DER are the AMD root and intermediate certificates (DER octets), supplied by

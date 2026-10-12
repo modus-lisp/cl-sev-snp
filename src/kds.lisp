@@ -13,9 +13,11 @@
 (defparameter *amd-kds-chain-url* "https://kdsintf.amd.com/vcek/v1/Genoa/cert_chain")
 (defparameter *tinfoil-attestation-url* "https://atc.tinfoil.sh/attestation")
 
-(defvar *pinned-ark-spki-sha256* nil
-  "Optional hex SHA-256 of the ARK SubjectPublicKeyInfo. When non-NIL, fetch-amd-chain refuses a
-chain whose ARK does not match.")
+(defvar *pinned-ark-spki-sha256* "429a69c9422aa258ee4d8db5fcda9c6470ef15f8cd5a9cebd6cbc7d90b863831"
+  "Hex SHA-256 of the ARK SubjectPublicKeyInfo. When non-NIL, fetch-amd-chain refuses a chain whose
+ARK does not match. The default is the Genoa ARK (CN=ARK-Genoa) as served by
+https://kdsintf.amd.com/vcek/v1/Genoa/cert_chain; it is the AMD root of trust for the Tinfoil
+enclave, so pinning it turns the KDS fetch from a trust-the-network step into a check.")
 
 (defun %http-get-octets (url)
   (let ((body (dexador:get url :force-binary t)))
