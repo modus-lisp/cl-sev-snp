@@ -3,7 +3,8 @@
 ;;;; :cl-sev-snp        pure Common Lisp (depends only on cram for gzip and json-simple
 ;;;;                    for the bundle), no FFI.
 ;;;; :cl-sev-snp/kds    optional network layer (AMD KDS chain, Tinfoil bundle fetch) via
-;;;;                    dexador. Kept separate so the verifier core stays dependency-free.
+;;;;                    seal/http (pure CL, no FFI). Kept separate so the verifier core
+;;;;                    stays dependency-free.
 
 (asdf:defsystem :cl-sev-snp
   :description "SEV-SNP attestation verification: ARK/ASK/VCEK chain, report signature, Tinfoil bundle (DSSE/sigstore), pure CL."
@@ -23,9 +24,9 @@
                              (:file "rekor")))))
 
 (asdf:defsystem :cl-sev-snp/kds
-  :description "Network fetch for cl-sev-snp: AMD KDS certificate chain and Tinfoil attestation bundle (uses dexador)."
+  :description "Network fetch for cl-sev-snp: AMD KDS certificate chain and Tinfoil attestation bundle (seal/http, pure CL)."
   :license "MIT"
-  :depends-on (:cl-sev-snp :dexador)
+  :depends-on (:cl-sev-snp :seal/http)
   :serial t
   :components ((:module "src" :components ((:file "kds")))))
 

@@ -1,4 +1,4 @@
-;;;; kds.lisp -- network layer for cl-sev-snp (dexador). Kept out of the pure core.
+;;;; kds.lisp -- network layer for cl-sev-snp (seal/http, pure CL). Kept out of the pure core.
 ;;;;
 ;;;;   fetch-amd-chain   -> (values ASK-DER ARK-DER) from AMD KDS (PEM, ASK first then ARK)
 ;;;;   fetch-tinfoil-bundle -> parsed Tinfoil attestation document (json-simple)
@@ -20,8 +20,12 @@ https://kdsintf.amd.com/vcek/v1/Genoa/cert_chain; it is the AMD root of trust fo
 enclave, so pinning it turns the KDS fetch from a trust-the-network step into a check.")
 
 (defun %http-get-octets (url)
-  (let ((body (dexador:get url :force-binary t)))
-    (coerce body '(simple-array (unsigned-byte 8) (*)))))
+  "GET URL and return the body as octets; a non-2xx status is an error (as
+dexador signalled)."
+  (let* ((r (seal.http:http-get url))
+         (status (seal.http:response-status r)))
+    (unless (<= 200 status 299) (%fail "GET ~a: HTTP ~d" url status))
+    (coerce (seal.http:response-body r) '(simple-array (unsigned-byte 8) (*)))))
 
 (defun fetch-amd-chain (&key (url *amd-kds-chain-url*))
   "Fetch the Genoa ASK+ARK chain. Returns (values ASK-DER ARK-DER)."
