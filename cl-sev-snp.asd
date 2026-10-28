@@ -21,7 +21,12 @@
                              (:file "snp")
                              (:file "nitro")
                              (:file "tinfoil")
-                             (:file "rekor")))))
+                             (:file "rekor")
+                             (:file "v3")
+                             (:file "v3-quote")
+                             (:file "v3-provenance")
+                             (:file "snp-measure")
+                             (:file "v3-policy")))))
 
 (asdf:defsystem :cl-sev-snp/kds
   :description "Network fetch for cl-sev-snp: AMD KDS certificate chain and Tinfoil attestation bundle (seal/http, pure CL)."
