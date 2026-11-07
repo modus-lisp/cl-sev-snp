@@ -1,4 +1,4 @@
-(require :cram) (require :json-simple)
+(require :cram) (require :json-simple) (require :natrium)
 ;; Load the library source first (it defines package CL-SEV-SNP), then the test package.
 (let ((root (merge-pathnames "../" (make-pathname :name nil :type nil :version nil
                                                  :defaults (or *load-truename* *default-pathname-defaults*)))))

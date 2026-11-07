@@ -1,7 +1,7 @@
 ;;;; cl-sev-snp.asd -- AMD SEV-SNP report and Tinfoil attestation verification.
 ;;;;
-;;;; :cl-sev-snp        pure Common Lisp (depends only on cram for gzip and json-simple
-;;;;                    for the bundle), no FFI.
+;;;; :cl-sev-snp        pure Common Lisp (depends only on cram for gzip, json-simple
+;;;;                    for the bundle and natrium for SHA-2), no FFI.
 ;;;; :cl-sev-snp/kds    optional network layer (AMD KDS chain, Tinfoil bundle fetch) via
 ;;;;                    seal/http (pure CL, no FFI). Kept separate so the verifier core
 ;;;;                    stays dependency-free.
@@ -9,7 +9,7 @@
 (asdf:defsystem :cl-sev-snp
   :description "SEV-SNP attestation verification: ARK/ASK/VCEK chain, report signature, Tinfoil bundle (DSSE/sigstore), pure CL."
   :license "MIT"
-  :depends-on (:cram :json-simple)
+  :depends-on (:cram :json-simple :natrium)
   :serial t
   :components ((:module "src"
                 :components ((:file "package")
